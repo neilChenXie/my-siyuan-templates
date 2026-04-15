@@ -2,6 +2,8 @@
 
 ### 更新日志
 
+20260407：对于多标签的内容，取**第一个**标签进行字内容聚合
+
 20260407：优化《3. 按内容标签聚合（正序）》模板
 1. 改为直接读取母文件的标签（而非标题）作为聚合标签：`$searchTag = $doc.Tag | replace "#$" ""`
 2. 去除H2内容块的subtype限制，改为聚合所有含标签的内容块
@@ -17,6 +19,27 @@
 20260309：元宝（Deepseek）在SQL语法上有些小错误；但是在`$v.Tag`​一来就写对了，我后面写成`$v.tag`​一直报错，debug了好久。Deepseek通过阅读思源笔记官方文档及论坛文档，输出的内容是`较可用的`​，不过核心还是需要**开发者**能看懂代码。
 
 20260215：这个案例中，AI不知道思源笔记提供的一些变量及值的对应关系。go语言基本逻辑相关的代码，输出没有问题。
+
+## 20260415更新
+
+优化《3. 按内容标签聚合（正序）》模板 - 只取第一个标签
+1. 问题：当母文件有多个标签（如 `#aa# #bb#`）时，原代码 `$searchTag = $doc.Tag | replace "#$" ""` 会得到 `#aa #bb`，导致无法正确匹配
+2. 解决方案：使用 `split` 分割标签字符串，再用 `range $k, $v` 遍历取第一个值后 `break`
+3. 核心代码：
+
+{% raw %}
+```go
+.action{$tagCollect := $doc.Tag | split " "}
+.action{range $k, $v := $tagCollect}
+    .action{$searchTag = $v | replace "#$" ""}
+    .action{break}
+.action{end}
+```
+{% endraw %}
+
+4. 踩坑记录：
+   - `index $tags 0` 报错：`value has type int; should be string`
+   - `split` 返回的是 `map[string]string`，不是数组，需要用 `range $k, $v` 遍历
 
 ## 20260309更新
 
